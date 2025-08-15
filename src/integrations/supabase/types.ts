@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -49,8 +49,8 @@ export type Database = {
       get_download_stats: {
         Args: { period_hours?: number }
         Returns: {
-          software_name: string
           download_count: number
+          software_name: string
         }[]
       }
       get_download_stats_by_country: {
@@ -62,13 +62,13 @@ export type Database = {
       }
       get_download_stats_over_time: {
         Args: {
-          period_type?: string
           period_count?: number
+          period_type?: string
           software_names?: string[]
         }
         Returns: {
-          period_label: string
           download_count: number
+          period_label: string
         }[]
       }
       get_software_names: {

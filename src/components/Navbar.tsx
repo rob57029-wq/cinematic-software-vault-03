@@ -56,7 +56,13 @@ const Navbar = () => {
           ].map((item) => (
             <button 
               key={item.id}
-              onClick={() => item.link === "/" ? scrollTo(item.id) : window.location.href = item.link}
+              onClick={() => {
+                if (item.link === "/") {
+                  scrollTo(item.id);
+                } else {
+                  window.location.href = item.link;
+                }
+              }}
               className="text-white/80 hover:text-white transition-colors text-sm font-light"
             >
               {item.label}
@@ -117,7 +123,13 @@ const Navbar = () => {
           ].map((item) => (
             <button 
               key={item.id}
-              onClick={() => item.link === "/" ? scrollTo(item.id) : window.location.href = item.link}
+              onClick={() => {
+                if (item.link === "/") {
+                  scrollTo(item.id);
+                } else {
+                  window.location.href = item.link;
+                }
+              }}
               className="text-left text-white/80 hover:text-white p-2 transition-colors text-lg font-light"
             >
               {item.label}

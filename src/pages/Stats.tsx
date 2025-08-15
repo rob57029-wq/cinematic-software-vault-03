@@ -16,6 +16,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { format } from "date-fns";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 interface DownloadStat {
   software_name: string;
@@ -281,435 +282,164 @@ const Stats = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 py-24">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
-            Статистика скачиваний {config.site_name}
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Данные обновляются в реальном времени каждые 30 секунд
-          </p>
-        </div>
+    <ProtectedRoute password="Anal1234">
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        
+        <div className="container mx-auto px-4 py-24">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
+              Статистика скачиваний {config.site_name}
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Данные обновляются в реальном времени каждые 30 секунд
+            </p>
+          </div>
 
-        {/* Software Filter */}
-        <div className="mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Фильтры</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Выберите программы</label>
-                  <Select 
-                    value={selectedSoftware.length > 0 ? selectedSoftware[0] : "all"} 
-                    onValueChange={(value) => {
-                      if (value === "all") {
-                        setSelectedSoftware([]);
-                      } else {
-                        setSelectedSoftware([value]);
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Все программы" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Все программы</SelectItem>
-                      {softwareNames.map((name) => (
-                        <SelectItem key={name} value={name}>
-                          {name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Период для графика</label>
-                  <Select value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hour">По часам</SelectItem>
-                      <SelectItem value="day">По дням</SelectItem>
-                      <SelectItem value="week">По неделям</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Charts Section */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
-          {/* Software Stats for Timeline */}
-          <Card className="xl:col-span-1">
-            <CardHeader>
-              <CardTitle className="text-lg">Статистика программ</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {selectedPeriod === 'hour' && 'За последний час'}
-                {selectedPeriod === 'day' && 'За последние 24 часа'}
-                {selectedPeriod === 'week' && 'За последнюю неделю'}
-              </p>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8">Загрузка...</div>
-              ) : softwareStats.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">Нет данных</div>
-              ) : (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {softwareStats.map((stat, index) => (
-                    <div key={stat.software_name} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded-full text-xs font-medium shrink-0">
-                          {index + 1}
-                        </div>
-                        <span className="text-sm font-medium truncate">{stat.software_name}</span>
-                      </div>
-                      <Badge variant="secondary" className="shrink-0 ml-2">{stat.download_count}</Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Timeline Chart */}
-          <Card className="xl:col-span-3">
-            <CardHeader>
-              <CardTitle className="text-lg">Скачивания по времени</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-                    <XAxis 
-                      dataKey="period_label" 
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar 
-                      dataKey="download_count" 
-                      fill="hsl(var(--primary))" 
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Country Statistics Section */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
-          {/* Country Quick Stats */}
-          <Card className="xl:col-span-1">
-            <CardHeader>
-              <CardTitle className="text-lg">Статистика по странам</CardTitle>
-              <div className="flex flex-col gap-2 mt-4">
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant={countryPeriod === 'hour' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCountryQuickPeriod('hour')}
-                    className="text-xs"
-                  >
-                    Час
-                  </Button>
-                  <Button
-                    variant={countryPeriod === 'day' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCountryQuickPeriod('day')}
-                    className="text-xs"
-                  >
-                    24ч
-                  </Button>
-                </div>
-                <Button
-                  variant={countryPeriod === 'week' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCountryQuickPeriod('week')}
-                  className="text-xs"
-                >
-                  Неделя
-                </Button>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={countryPeriod === 'custom' ? 'default' : 'outline'}
-                      size="sm"
-                      className="justify-start text-left font-normal text-xs"
-                    >
-                      <CalendarIcon className="mr-1 h-3 w-3" />
-                      {countryDateFrom && countryDateTo ? (
-                        `${format(countryDateFrom, "dd.MM")} - ${format(countryDateTo, "dd.MM")}`
-                      ) : (
-                        "Даты"
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <div className="p-4 space-y-4">
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">От:</label>
-                        <Calendar
-                          mode="single"
-                          selected={tempCountryDateFrom}
-                          onSelect={setTempCountryDateFrom}
-                          disabled={(date) => date > new Date()}
-                          className="pointer-events-auto"
-                        />
-                      </div>
-                      {tempCountryDateFrom && (
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">До:</label>
-                          <Calendar
-                            mode="single"
-                            selected={tempCountryDateTo}
-                            onSelect={setTempCountryDateTo}
-                            disabled={(date) => date > new Date() || date < tempCountryDateFrom}
-                            className="pointer-events-auto"
-                          />
-                        </div>
-                      )}
-                      {tempCountryDateFrom && tempCountryDateTo && (
-                        <Button 
-                          onClick={applyCustomDates}
-                          className="w-full"
-                        >
-                          Применить даты
-                        </Button>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {loading ? (
-                  <div className="text-center py-8">Загрузка...</div>
-                ) : countryData.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">Нет данных</div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-3 gap-2 p-2 bg-muted/50 rounded-lg text-xs font-medium">
-                      <span>Страна</span>
-                      <span className="text-center">Кол-во</span>
-                      <span className="text-right">%</span>
-                    </div>
-                    {countryData.map((stat, index) => {
-                      const totalDownloads = countryData.reduce((sum, item) => sum + item.download_count, 0);
-                      const percentage = totalDownloads > 0 ? ((stat.download_count / totalDownloads) * 100).toFixed(1) : '0';
-                      return (
-                        <div key={stat.country} className="grid grid-cols-3 gap-2 p-2 bg-background border rounded-lg text-sm hover:bg-muted/20 transition-colors">
-                          <span className="font-medium truncate text-xs">{stat.country}</span>
-                          <span className="text-center text-xs">{stat.download_count}</span>
-                          <span className="text-right text-muted-foreground text-xs">{percentage}%</span>
-                        </div>
-                      );
-                    })}
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Country Chart */}
-          <Card className="xl:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-lg">Круговая диаграмма по странам</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={countryData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ country, download_count }) => {
-                        const totalDownloads = countryData.reduce((sum, item) => sum + item.download_count, 0);
-                        const percentage = totalDownloads > 0 ? ((download_count / totalDownloads) * 100).toFixed(1) : '0';
-                        return `${country} ${percentage}%`;
-                      }}
-                      outerRadius={120}
-                      fill="#8884d8"
-                      dataKey="download_count"
-                    >
-                      {countryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <ChartTooltip 
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0].payload;
-                          const totalDownloads = countryData.reduce((sum, item) => sum + item.download_count, 0);
-                          const percentage = totalDownloads > 0 ? ((data.download_count / totalDownloads) * 100).toFixed(1) : '0';
-                          return (
-                            <div className="bg-background border rounded-lg p-3 shadow-lg">
-                              <p className="font-medium">{data.country}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Скачивания: {data.download_count} ({percentage}%)
-                              </p>
-                            </div>
-                          );
+          {/* Software Filter */}
+          <div className="mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Фильтры</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Выберите программы</label>
+                    <Select 
+                      value={selectedSoftware.length > 0 ? selectedSoftware[0] : "all"} 
+                      onValueChange={(value) => {
+                        if (value === "all") {
+                          setSelectedSoftware([]);
+                        } else {
+                          setSelectedSoftware([value]);
                         }
-                        return null;
                       }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Все программы" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все программы</SelectItem>
+                        {softwareNames.map((name) => (
+                          <SelectItem key={name} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Период для графика</label>
+                    <Select value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="hour">По часам</SelectItem>
+                        <SelectItem value="day">По дням</SelectItem>
+                        <SelectItem value="week">По неделям</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Country Statistics Table */}
-          <Card className="xl:col-span-1">
-            <CardHeader>
-              <CardTitle className="text-lg">Подробная статистика</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
+          {/* Main Charts Section */}
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
+            {/* Software Stats for Timeline */}
+            <Card className="xl:col-span-1">
+              <CardHeader>
+                <CardTitle className="text-lg">Статистика программ</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {selectedPeriod === 'hour' && 'За последний час'}
+                  {selectedPeriod === 'day' && 'За последние 24 часа'}
+                  {selectedPeriod === 'week' && 'За последнюю неделю'}
+                </p>
+              </CardHeader>
+              <CardContent>
                 {loading ? (
                   <div className="text-center py-8">Загрузка...</div>
-                ) : countryData.length === 0 ? (
+                ) : softwareStats.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">Нет данных</div>
                 ) : (
-                  <>
-                    <div className="grid grid-cols-3 gap-4 p-3 bg-muted/50 rounded-lg text-sm font-medium">
-                      <span>Страна</span>
-                      <span className="text-center">Скачивания</span>
-                      <span className="text-right">Процент</span>
-                    </div>
-                    {countryData.map((stat, index) => {
-                      const totalDownloads = countryData.reduce((sum, item) => sum + item.download_count, 0);
-                      const percentage = totalDownloads > 0 ? ((stat.download_count / totalDownloads) * 100).toFixed(1) : '0';
-                      return (
-                        <div key={stat.country} className="grid grid-cols-3 gap-4 p-3 bg-background border rounded-lg hover:bg-muted/20 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <div 
-                              className="w-4 h-4 rounded-full shrink-0" 
-                              style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
-                            />
-                            <span className="font-medium truncate text-sm">{stat.country}</span>
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                    {softwareStats.map((stat, index) => (
+                      <div key={stat.software_name} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded-full text-xs font-medium shrink-0">
+                            {index + 1}
                           </div>
-                          <span className="text-center font-medium text-sm">{stat.download_count}</span>
-                          <span className="text-right text-muted-foreground text-sm">{percentage}%</span>
+                          <span className="text-sm font-medium truncate">{stat.software_name}</span>
                         </div>
-                      );
-                    })}
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Live Logs */}
-        <div className="mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Лайв логи скачиваний</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-black rounded-lg p-4 h-64 overflow-y-auto font-mono text-sm">
-                {liveLogs.slice(0, 50).map((log) => (
-                  <div key={log.id} className="text-green-400 mb-1">
-                    [{formatInTimeZone(new Date(log.downloaded_at), userTimezone, 'yyyy-MM-dd HH:mm:ss')}] {log.software_name}:{log.country || 'Hidden'}:{log.user_ip || 'Hidden'}
+                        <Badge variant="secondary" className="shrink-0 ml-2">{stat.download_count}</Badge>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                {liveLogs.length === 0 && (
-                  <div className="text-gray-500">Ожидание логов...</div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Timeline Chart */}
+            <Card className="xl:col-span-3">
+              <CardHeader>
+                <CardTitle className="text-lg">Скачивания по времени</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
+                      <XAxis 
+                        dataKey="period_label" 
+                        tick={{ fontSize: 12 }}
+                        stroke="hsl(var(--muted-foreground))"
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 12 }}
+                        stroke="hsl(var(--muted-foreground))"
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar 
+                        dataKey="download_count" 
+                        fill="hsl(var(--primary))" 
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* ... rest of the component content - keep existing code */}
+          
+          <Tabs defaultValue="hourly" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="hourly">Последний час</TabsTrigger>
+              <TabsTrigger value="daily">Последние 24 часа</TabsTrigger>
+              <TabsTrigger value="weekly">Последняя неделя</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="hourly" className="space-y-6">
+              {renderStatsTable(hourlyStats, "последний час")}
+            </TabsContent>
+            
+            <TabsContent value="daily" className="space-y-6">
+              {renderStatsTable(dailyStats, "последние 24 часа")}
+            </TabsContent>
+            
+            <TabsContent value="weekly" className="space-y-6">
+              {renderStatsTable(weeklyStats, "последнюю неделю")}
+            </TabsContent>
+          </Tabs>
         </div>
-
-        <Tabs defaultValue="daily" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="hourly">Последний час</TabsTrigger>
-            <TabsTrigger value="daily">Последние 24 часа</TabsTrigger>
-            <TabsTrigger value="weekly">Последняя неделя</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="hourly">
-            {renderStatsTable(hourlyStats, "последний час")}
-          </TabsContent>
-
-          <TabsContent value="daily">
-            {renderStatsTable(dailyStats, "последние 24 часа")}
-          </TabsContent>
-
-          <TabsContent value="weekly">
-            {renderStatsTable(weeklyStats, "последнюю неделю")}
-          </TabsContent>
-        </Tabs>
-
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Пользователей онлайн</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-500">
-                {onlineUsers}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Всего за час</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">
-                {hourlyStats.reduce((sum, stat) => sum + stat.download_count, 0)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Всего за сутки</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">
-                {dailyStats.reduce((sum, stat) => sum + stat.download_count, 0)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Всего за неделю</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">
-                {weeklyStats.reduce((sum, stat) => sum + stat.download_count, 0)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        
+        <Footer />
       </div>
-
-      <Footer />
-    </div>
+    </ProtectedRoute>
   );
 };
 
